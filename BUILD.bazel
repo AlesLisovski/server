@@ -1,7 +1,21 @@
-
+cc_library(
+    name = "json_cpp",
+    hdrs = [
+        "json/json-forwards.h",
+        "json/json.h",
+    ],
+    srcs = [
+        "json/jsoncpp.cpp",
+    ],
+    includes = [
+        "json/json-forwards.h",
+        "json/json.h",
+    ],
+)
 
 cc_binary(
 name = "test",
 srcs = ["main.cc"],
-deps = ["@boost//:asio"],
+deps = ["@boost//:asio",
+":json_cpp"],
 )
