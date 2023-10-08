@@ -1,0 +1,10 @@
+cc_library(
+    name = "person_cpp",
+    hdrs = [
+        "person.h",
+    ],
+    srcs = [
+        "person.cpp",
+    ],
+    visibility = ["//visibility:public"],
+)
