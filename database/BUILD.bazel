@@ -1,0 +1,14 @@
+cc_library(
+    name = "database_cpp",
+    hdrs = [
+        "database.h",
+        "settings.h",
+    ],
+    srcs = [
+        "database.cpp",
+    ],
+    deps = [
+        "//person:person_cpp",
+    ],
+    visibility = ["//visibility:public"],
+)

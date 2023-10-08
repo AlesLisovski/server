@@ -1,7 +1,18 @@
+#include "database/database.h"
+#include "database/settings.h"
+#include "message_handler/MessageHandler.h"
+#include "person/person.h"
+#include "sqlite3/sqlite3.h"
+#include "json/json-forwards.h"
+#include "json/json.h"
 #include <boost/asio.hpp>
 #include <boost/bind/bind.hpp>
 #include <boost/enable_shared_from_this.hpp>
+#include <boost/ref.hpp>
+#include <csignal>
 #include <iostream>
+#include <memory>
+#include <string>
 
 using namespace boost;
 
@@ -15,10 +26,12 @@ public:
 
   asio::ip::tcp::socket &socket() { return socket_; }
 
-  void start(const std::string &received_message) {
+  void start(const std::string &received_message, Database &data) {
     std::cout << "RECEIVED: " << received_message;
 
-    message_ = received_message;
+    MessageHandler handler(received_message, data);
+
+    message_ = handler.GetResponse();
     boost::asio::async_write(
         socket_, boost::asio::buffer(message_),
         boost::bind(&tcp_connection::handle_write, shared_from_this(),
@@ -41,8 +54,14 @@ public:
   tcp_server(boost::asio::io_service &io_service)
       : acceptor_(io_service,
                   asio::ip::tcp::endpoint(
-                      asio::ip::address_v4::from_string("127.0.0.1"), 8888)) {
+                      asio::ip::address_v4::from_string("127.0.0.1"), 8888)),
+        database_(DATABASE) {
     start_accept();
+  }
+
+  void CloseTcpServer() {
+    std::cout << "\nClosing the server\n";
+    database_.SaveData();
   }
 
 private:
@@ -61,8 +80,8 @@ private:
     if (!error) {
       new_connection->socket().async_read_some(
           boost::asio::buffer(received_message_, 4096),
-          boost::bind(&tcp_connection::start, new_connection,
-                      received_message_));
+          boost::bind(&tcp_connection::start, new_connection, received_message_,
+                      boost::ref(database_)));
     }
 
     start_accept();
@@ -70,12 +89,27 @@ private:
 
   char received_message_[4096];
   asio::ip::tcp::acceptor acceptor_;
+  Database database_;
 };
 
+tcp_server *server_ptr = nullptr;
+
+void signal_handler(int) {
+  if (server_ptr != nullptr) {
+    server_ptr->CloseTcpServer();
+  }
+
+  exit(0);
+}
+
 int main() {
+  boost::asio::io_service io_service;
+  tcp_server server(io_service);
+  server_ptr = &server;
+
+  std::signal(SIGINT, signal_handler);
+
   try {
-    boost::asio::io_service io_service;
-    tcp_server server(io_service);
     io_service.run();
   } catch (std::exception &e) {
     std::cerr << e.what() << std::endl;

@@ -1,21 +1,13 @@
-cc_library(
-    name = "json_cpp",
-    hdrs = [
-        "json/json-forwards.h",
-        "json/json.h",
-    ],
-    srcs = [
-        "json/jsoncpp.cpp",
-    ],
-    includes = [
-        "json/json-forwards.h",
-        "json/json.h",
-    ],
-)
-
 cc_binary(
-name = "test",
-srcs = ["main.cc"],
-deps = ["@boost//:asio",
-":json_cpp"],
+    name = "test",
+    srcs = [
+        "main.cc"
+        ],
+    deps = [
+        "@boost//:asio",
+        "//json:json_cpp",
+        "//database:database_cpp",
+        "//message_handler:message_handler_cpp",
+        "//person:person_cpp",
+        ],
 )
