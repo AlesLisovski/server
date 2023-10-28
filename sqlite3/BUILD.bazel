@@ -1,0 +1,12 @@
+# DOCS: https://www.sqlite.org/cintro.html
+
+cc_library(
+    name = "sqlite3_cpp",
+    hdrs = [
+        "sqlite3.h",
+    ],
+    srcs = [
+        "sqlite3.c",
+    ],
+    visibility = ["//visibility:public"],
+)
