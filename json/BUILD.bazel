@@ -1,0 +1,11 @@
+cc_library(
+    name = "json_cpp",
+    hdrs = [
+        "json-forwards.h",
+        "json.h",
+    ],
+    srcs = [
+        "jsoncpp.cpp",
+    ],
+    visibility = ["//visibility:public"],
+)
