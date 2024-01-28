@@ -9,6 +9,7 @@ cc_library(
     ],
     deps = [
         "//person:person_cpp",
+        "//sqlite3:sqlite3_cpp",
     ],
     visibility = ["//visibility:public"],
 )
