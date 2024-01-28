@@ -1,11 +1,15 @@
 #pragma once
 #include "person/person.h"
+#include "sqlite3/sqlite3.h"
 #include <algorithm>
+#include <cstring>
+#include <iostream>
+#include <string>
 #include <vector>
 
 class Database {
-  std::vector<Person> data_;
   std::string database_;
+  sqlite3 *db_;
 
 public:
   Database(const std::string &file_name);
@@ -16,9 +20,8 @@ public:
 
   void AddData(const Person &user);
   void DeleteAccount(const Person &user);
-  void SaveData();
+  void CloseDatabase();
   void ChangePassword(const Person &user, const std::string &new_password);
-  void CleanDatabase();
 
   Person &operator[](size_t index);
 };

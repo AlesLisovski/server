@@ -1,3 +1,3 @@
 #include <string>
 
-std::string DATABASE = "/home/ales/GIT/chat/database/Database.txt";
+const std::string DB = "/home/ales/GIT/server/database/Database.db";

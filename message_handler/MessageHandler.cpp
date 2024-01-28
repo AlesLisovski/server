@@ -20,6 +20,8 @@ MessageHandler::MessageHandler(const std::string &message, Database &database) {
     response_ = RequestRegistration(database);
   } else if (Request_Type == "Authorize") {
     response_ = RequestAuthorization(database);
+  } else if (Request_Type == "Application closed") {
+    RequestAppClosed();
   } else if (Request_Type == "Change password") {
     response_ = RequestChangePassword(database);
   } else if (Request_Type == "Delete account") {
@@ -35,14 +37,16 @@ MessageHandler::MessageHandler(const std::string &message, Database &database) {
 
 std::string MessageHandler::GetResponse() const { return response_; }
 
+std::string MessageHandler::GetLogin() const { return login_; }
+
 std::string MessageHandler::RequestNotDefined() const {
   Json::Value json;
-  SetRequestStatus(json, "Request_Ans", "Fail", "Request not defined");
+  SetRequestStatus(json, "Request_Ans", "FAIL", "Request not defined");
 
   return JsonToString(json);
 }
 
-std::string MessageHandler::RequestRegistration(Database &database) const {
+std::string MessageHandler::RequestRegistration(Database &database) {
   Person user(root_["Login"].asString(), root_["Password"].asString());
 
   if (!database.FindUser(user)) {
@@ -51,27 +55,33 @@ std::string MessageHandler::RequestRegistration(Database &database) const {
     Json::Value json;
     SetRequestStatus(json, "Registration_Ans", "OK", "");
 
+    socket_status_ = SOCKET_STATUS::CREATE_SOCKET;
+    SetLogin(root_["Login"].asString());
+
     return JsonToString(json);
   } else {
     Json::Value json;
-    SetRequestStatus(json, "Registration_Ans", "Fail",
+    SetRequestStatus(json, "Registration_Ans", "FAIL",
                      "Account already exists");
 
     return JsonToString(json);
   }
 }
 
-std::string MessageHandler::RequestAuthorization(Database &database) const {
+std::string MessageHandler::RequestAuthorization(Database &database) {
   Person user(root_["Login"].asString(), root_["Password"].asString());
 
   if (database.FindUser(user)) {
     Json::Value json;
     SetRequestStatus(json, "Authorization_Ans", "OK", "");
 
+    socket_status_ = SOCKET_STATUS::CREATE_SOCKET;
+    SetLogin(root_["Login"].asString());
+
     return JsonToString(json);
   } else {
     Json::Value json;
-    SetRequestStatus(json, "Authorization_Ans", "Fail", "Account not found");
+    SetRequestStatus(json, "Authorization_Ans", "FAIL", "Account not found");
 
     return JsonToString(json);
   }
@@ -90,13 +100,13 @@ std::string MessageHandler::RequestChangePassword(Database &database) const {
       return JsonToString(json);
     } else {
       Json::Value json;
-      SetRequestStatus(json, "Change password_Ans", "Fail", "Equal passwords");
+      SetRequestStatus(json, "Change password_Ans", "FAIL", "Equal passwords");
 
       return JsonToString(json);
     }
   } else {
     Json::Value json;
-    SetRequestStatus(json, "Change password_Ans", "Fail",
+    SetRequestStatus(json, "Change password_Ans", "FAIL",
                      "Account doesn't exist");
 
     return JsonToString(json);
@@ -115,7 +125,7 @@ std::string MessageHandler::RequestDeleteAccout(Database &database) const {
     return JsonToString(json);
   } else {
     Json::Value json;
-    SetRequestStatus(json, "Delete account_Ans", "Fail", "Account not found");
+    SetRequestStatus(json, "Delete account_Ans", "FAIL", "Account not found");
 
     return JsonToString(json);
   }
@@ -142,12 +152,19 @@ std::string MessageHandler::RequestMessage(Database &database) const {
   return JsonToString(json);
 }
 
-std::string MessageHandler::JsonToString(Json::Value &json) const {
+std::string MessageHandler::JsonToString(const Json::Value &json) const {
   Json::FastWriter fastWriter;
   std::string result = fastWriter.write(json);
 
   return result;
 }
+
+void MessageHandler::RequestAppClosed() {
+  socket_status_ = SOCKET_STATUS::DELETE_SOCKET;
+  login_ = root_["Login"].asString();
+}
+
+void MessageHandler::SetLogin(const std::string &login) { login_ = login; }
 
 void MessageHandler::SetRequestStatus(Json::Value &json,
                                       const std::string &request,
@@ -157,3 +174,5 @@ void MessageHandler::SetRequestStatus(Json::Value &json,
   json["Code"] = code;
   json["Status"] = status;
 }
+
+int MessageHandler::GetSocketStatus() const { return socket_status_; }
